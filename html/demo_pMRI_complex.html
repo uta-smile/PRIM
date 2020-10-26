@@ -1,0 +1,326 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>demo_pMRI_complex</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-12-19"><meta name="DC.source" content="demo_pMRI_complex.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Initialization and Parameter Settings</a></li><li><a href="#3">Random Mask Generation</a></li><li><a href="#4">GRAPPA</a></li><li><a href="#5">CGSPIRiT</a></li><li><a href="#6">CSSENSE</a></li><li><a href="#7">JTV</a></li><li><a href="#8">Visualization</a></li></ul></div><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">% This is an example for parrallel MRI</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">% Related papers:</span>
+<span class="comment">%</span>
+<span class="comment">% Chen Chen, Yeqing Li, and Junzhou Huang, "Calibrationless Parallel MRI with Joint Total Variation Regularization", the</span>
+<span class="comment">% Annual International Conference on Medical Image Computing and Computer Assisted Intervention (MICCAI), 2013.</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+</pre><h2>Initialization and Parameter Settings<a name="2"></a></h2><pre class="codeinput">clear <span class="string">all</span>; close <span class="string">all</span>;
+db_pars.resize = [256, 256];
+[data, fdata] = load_db(1);
+<span class="comment">% regularization parameters</span>
+alpha = 4e3;
+beta = 4e-1;
+
+maxIter=50;
+[m n, T] = size(fdata); N = m*n;
+</pre><h2>Random Mask Generation<a name="3"></a></h2><pre class="codeinput">mask_pars.image_size = [m, n];
+mask_pars.central_window = [30, 30];
+mask_pars.d = 4;
+mask = load_mask(<span class="string">'random'</span>, mask_pars);
+figure;imshow(mask,[]);
+</pre><img vspace="5" hspace="5" src="demo_pMRI_complex_01.png" alt=""> <h2>GRAPPA<a name="4"></a></h2><pre class="codeinput">kSize = [5,5]; CalibTyk = 0.01;
+[CalibSize, dcomp] = getCalibSize(mask);  <span class="comment">% get size of calibration area from mask</span>
+b = fdata.*repmat(mask,[1,1,T]); <span class="comment">% sample the original data</span>
+fprintf(<span class="string">'======== GRAPPA ==========\n'</span>);
+kCalib = crop(b, [CalibSize,T]);
+t0 = tic; res_grappa = GRAPPA(b,kCalib,kSize,CalibTyk); t=toc(t0);
+im_grappa = ifft2c(res_grappa);
+figure;imshow(abs(sos(im_grappa)),[]);
+
+fprintf(<span class="string">'RMSE: %.5f, time=%.2fs\n'</span>, RMSE(im_grappa, data), t);
+</pre><pre class="codeoutput">======== GRAPPA ==========
+reconstructiong coil 1
+reconstructiong coil 2
+reconstructiong coil 3
+reconstructiong coil 4
+reconstructiong coil 5
+reconstructiong coil 6
+reconstructiong coil 7
+reconstructiong coil 8
+RMSE: 5068.50289, time=169.86s
+</pre><img vspace="5" hspace="5" src="demo_pMRI_complex_02.png" alt=""> <h2>CGSPIRiT<a name="5"></a></h2><pre class="codeinput">fprintf(<span class="string">'======== CGSPIRiT ==========\n'</span>);
+nIterCG = 10; ReconTyk = 1e-5;
+kCalib = crop(data,[CalibSize,T]);
+kernel = zeros([kSize,T,T]);
+[AtA, ~] = corrMatrix(kCalib,kSize);
+<span class="keyword">for</span> t=1:T
+    kernel(:,:,:,t) = calibrate(AtA,kSize,T,t,CalibTyk);
+<span class="keyword">end</span>
+t0 = tic;
+GOP = SPIRiT(kernel, <span class="string">'fft'</span>,[m,n]);
+[res_cg, RELRES,RESVEC,info] = cgSPIRiT(b,GOP,nIterCG,ReconTyk, b, data);
+t = toc(t0);
+im_cgspirit = ifft2c(res_cg);
+figure;imshow(abs(sos(im_cgspirit)),[]);
+
+fprintf(<span class="string">'RMSE: %.5f, time=%.2fs\n'</span>, RMSE(im_cgspirit, data), t);
+</pre><pre class="codeoutput">======== CGSPIRiT ==========
+RMSE: 12520.00631, time=3.97s
+</pre><img vspace="5" hspace="5" src="demo_pMRI_complex_03.png" alt=""> <h2>CSSENSE<a name="6"></a></h2><pre class="codeinput">fprintf(<span class="string">'======== CSSENSE ==========\n'</span>);
+
+im_cssense = zeros([m, n, T]);
+t0 = tic;
+<span class="keyword">for</span> t=1:T,
+    A = p2DFT(mask, [m n], 1, 2);
+    t_im = data(:, :, t);
+    input1.alpha=alpha*2; 	<span class="comment">% Weight for TV penalty</span>
+    input1.beta=beta*2;	<span class="comment">% Weight for Transform L1 penalty</span>
+    input1.maxIter=maxIter;input1.num=1;
+    input1.mask=mask; input1.im_ori = t_im;
+    input1.data =  A*t_im;
+    input1.im_dc=real(ifft2(t_im))*sqrt(m*n);
+    input1.Phi=Wavelet(<span class="string">'Daubechies'</span>,4, 4); <span class="comment">% DecLevel</span>
+
+    fprintf(<span class="string">'Processing coil %d...\n'</span>, t);
+    out=sparseMRICg(input1); out1=out; <span class="comment">%im1=abs(out.im_recover);</span>
+    im_cssense(:, :, t)=out.im_recover;
+    <span class="comment">% snr0(:,t)=out.snrTrace; time0(:,t)=out.timeTrace;</span>
+<span class="keyword">end</span>
+t = toc(t0);
+<span class="comment">% im3=reshape(img, [m, n, T]);</span>
+<span class="comment">% err3 = sos(im3-F);</span>
+
+<span class="comment">% im3 = sos(im_cssense);</span>
+figure;imshow(abs(sos(im_cssense)),[]);
+
+fprintf(<span class="string">'RMSE: %.5f, time=%.2fs\n'</span>, RMSE(im_cssense, data), t);
+</pre><pre class="codeoutput">======== CSSENSE ==========
+Processing coil 1...
+Processing coil 2...
+Processing coil 3...
+Processing coil 4...
+Processing coil 5...
+Processing coil 6...
+Processing coil 7...
+Processing coil 8...
+RMSE: 6819.97384, time=469.56s
+</pre><img vspace="5" hspace="5" src="demo_pMRI_complex_04.png" alt=""> <h2>JTV<a name="7"></a></h2><pre class="codeinput">A = {}; b = {};
+<span class="keyword">for</span> t=1:T
+A{t} = p2DFT(mask, size(data(:,:,1)), 1, 2);
+b{t} = A{t}*data(:,:,t);
+im_dc(:,:,t) = A{t}'*b{t};
+<span class="keyword">end</span>
+input.f=data; input.n1=m;input.n2=n;
+input.alpha=alpha;
+input.L=1;
+input.no=maxIter; <span class="comment">%%%%  Change no for different iteration numbers</span>
+
+fprintf(<span class="string">'calling the function JTV.....\n'</span>);
+t0 = tic;
+out = FISTA_JTV(b, A, input); t = toc(t0);
+im_jtv = out.y;
+figure;imshow(abs(sos(im_jtv)),[]);
+
+fprintf(<span class="string">'RMSE: %.5f, time=%.2fs\n'</span>, RMSE(im_jtv, data), t);
+</pre><pre class="codeoutput">calling the function JTV.....
+RMSE: 4503.92199, time=53.92s
+</pre><img vspace="5" hspace="5" src="demo_pMRI_complex_05.png" alt=""> <h2>Visualization<a name="8"></a></h2><pre class="codeinput">figure;
+plot(out.rmse);
+legend(<span class="string">'JTVMRI'</span>);
+xlabel(<span class="string">'Iteration'</span>);
+ylabel(<span class="string">'RMSE'</span>);
+
+figure; hold <span class="string">on</span>;
+subplot(1,5,1); imshow(abs(sos(data)),[]); title(<span class="string">'Ground Truth'</span>);
+subplot(1,5,2); imshow(abs(sos(im_grappa)),[]); title(<span class="string">'GRAPPA'</span>);
+subplot(1,5,3); imshow(abs(sos(im_cgspirit)), []); title(<span class="string">'CGSPIRiT'</span>);
+subplot(1,5,4); imshow(abs(sos(im_cssense)),[]); title(<span class="string">'CS\_SENSE'</span>);
+subplot(1,5,5); imshow(abs(sos(im_jtv)),[]); title(<span class="string">'JTVMRI'</span>);
+</pre><img vspace="5" hspace="5" src="demo_pMRI_complex_06.png" alt=""> <img vspace="5" hspace="5" src="demo_pMRI_complex_07.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This is an example for parrallel MRI 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Related papers:
+% 
+% Chen Chen, Yeqing Li, and Junzhou Huang, "Calibrationless Parallel MRI with Joint Total Variation Regularization", the 
+% Annual International Conference on Medical Image Computing and Computer Assisted Intervention (MICCAI), 2013.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% Initialization and Parameter Settings
+clear all; close all;
+db_pars.resize = [256, 256];
+[data, fdata] = load_db(1);
+% regularization parameters
+alpha = 4e3; 
+beta = 4e-1;
+
+maxIter=50;
+[m n, T] = size(fdata); N = m*n;
+
+%% Random Mask Generation
+mask_pars.image_size = [m, n];
+mask_pars.central_window = [30, 30];
+mask_pars.d = 4;
+mask = load_mask('random', mask_pars);
+figure;imshow(mask,[]);
+
+%% GRAPPA
+kSize = [5,5]; CalibTyk = 0.01;
+[CalibSize, dcomp] = getCalibSize(mask);  % get size of calibration area from mask
+b = fdata.*repmat(mask,[1,1,T]); % sample the original data
+fprintf('======== GRAPPA ==========\n');
+kCalib = crop(b, [CalibSize,T]);
+t0 = tic; res_grappa = GRAPPA(b,kCalib,kSize,CalibTyk); t=toc(t0);
+im_grappa = ifft2c(res_grappa);
+figure;imshow(abs(sos(im_grappa)),[]);
+
+fprintf('RMSE: %.5f, time=%.2fs\n', RMSE(im_grappa, data), t);
+
+%% CGSPIRiT
+fprintf('======== CGSPIRiT ==========\n');
+nIterCG = 10; ReconTyk = 1e-5;
+kCalib = crop(data,[CalibSize,T]);
+kernel = zeros([kSize,T,T]);
+[AtA, ~] = corrMatrix(kCalib,kSize);
+for t=1:T
+    kernel(:,:,:,t) = calibrate(AtA,kSize,T,t,CalibTyk);
+end
+t0 = tic;
+GOP = SPIRiT(kernel, 'fft',[m,n]);
+[res_cg, RELRES,RESVEC,info] = cgSPIRiT(b,GOP,nIterCG,ReconTyk, b, data);
+t = toc(t0);
+im_cgspirit = ifft2c(res_cg);
+figure;imshow(abs(sos(im_cgspirit)),[]);
+
+fprintf('RMSE: %.5f, time=%.2fs\n', RMSE(im_cgspirit, data), t);
+
+%% CSSENSE
+fprintf('======== CSSENSE ==========\n');
+
+im_cssense = zeros([m, n, T]);
+t0 = tic;
+for t=1:T,
+    A = p2DFT(mask, [m n], 1, 2); 
+    t_im = data(:, :, t);
+    input1.alpha=alpha*2; 	% Weight for TV penalty
+    input1.beta=beta*2;	% Weight for Transform L1 penalty
+    input1.maxIter=maxIter;input1.num=1;
+    input1.mask=mask; input1.im_ori = t_im;
+    input1.data =  A*t_im;
+    input1.im_dc=real(ifft2(t_im))*sqrt(m*n);
+    input1.Phi=Wavelet('Daubechies',4, 4); % DecLevel
+    
+    fprintf('Processing coil %d...\n', t);
+    out=sparseMRICg(input1); out1=out; %im1=abs(out.im_recover);
+    im_cssense(:, :, t)=out.im_recover;
+    % snr0(:,t)=out.snrTrace; time0(:,t)=out.timeTrace;
+end
+t = toc(t0);
+% im3=reshape(img, [m, n, T]);
+% err3 = sos(im3-F);
+
+% im3 = sos(im_cssense);
+figure;imshow(abs(sos(im_cssense)),[]);
+
+fprintf('RMSE: %.5f, time=%.2fs\n', RMSE(im_cssense, data), t);
+
+%% JTV
+A = {}; b = {};
+for t=1:T
+A{t} = p2DFT(mask, size(data(:,:,1)), 1, 2);
+b{t} = A{t}*data(:,:,t);
+im_dc(:,:,t) = A{t}'*b{t};
+end
+input.f=data; input.n1=m;input.n2=n;
+input.alpha=alpha;
+input.L=1;
+input.no=maxIter; %%%%  Change no for different iteration numbers
+
+fprintf('calling the function JTV.....\n');
+t0 = tic;
+out = FISTA_JTV(b, A, input); t = toc(t0);
+im_jtv = out.y;
+figure;imshow(abs(sos(im_jtv)),[]);
+
+fprintf('RMSE: %.5f, time=%.2fs\n', RMSE(im_jtv, data), t);
+
+
+%% Visualization
+figure;
+plot(out.rmse);
+legend('JTVMRI');
+xlabel('Iteration');
+ylabel('RMSE');
+
+figure; hold on;
+subplot(1,5,1); imshow(abs(sos(data)),[]); title('Ground Truth');
+subplot(1,5,2); imshow(abs(sos(im_grappa)),[]); title('GRAPPA');
+subplot(1,5,3); imshow(abs(sos(im_cgspirit)), []); title('CGSPIRiT');
+subplot(1,5,4); imshow(abs(sos(im_cssense)),[]); title('CS\_SENSE');
+subplot(1,5,5); imshow(abs(sos(im_jtv)),[]); title('JTVMRI');
+
+
+
+##### SOURCE END #####
+--></body></html>

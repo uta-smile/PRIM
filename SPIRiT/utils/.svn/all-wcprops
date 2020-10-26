@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/SPIRiT/!svn/ver/4/trunk/utils
+END
+fft2c.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/SPIRiT/!svn/ver/1/trunk/utils/fft2c.m
+END
+kaiser_bessel_ft.m
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/SPIRiT/!svn/ver/1/trunk/utils/kaiser_bessel_ft.m
+END
+sos.m
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/SPIRiT/!svn/ver/1/trunk/utils/sos.m
+END
+getCalibSize.m
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/SPIRiT/!svn/ver/1/trunk/utils/getCalibSize.m
+END
+spirit.m
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/SPIRiT/!svn/ver/1/trunk/utils/spirit.m
+END
+ifftc.m
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/SPIRiT/!svn/ver/1/trunk/utils/ifftc.m
+END
+kb.m
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/SPIRiT/!svn/ver/4/trunk/utils/kb.m
+END
+ifft2c.m
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/SPIRiT/!svn/ver/1/trunk/utils/ifft2c.m
+END
+zpad.m
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/SPIRiT/!svn/ver/1/trunk/utils/zpad.m
+END
+kbapod.m
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/SPIRiT/!svn/ver/4/trunk/utils/kbapod.m
+END
+fftc.m
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/SPIRiT/!svn/ver/1/trunk/utils/fftc.m
+END
+crop.m
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/SPIRiT/!svn/ver/1/trunk/utils/crop.m
+END
+getApod.m
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/SPIRiT/!svn/ver/4/trunk/utils/getApod.m
+END

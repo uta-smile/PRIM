@@ -1,0 +1,91 @@
+function output = JTVMRI(b, RR, xf, input)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% minimize alpha*JTV(X) + 0.5*sum_{c}||R_{s}X(:,c)-b_{c}||_2^2
+%%% Phi:DWT,  Phi': IDWT
+%%% Jan., 2013, Written by xxx at xxx
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+parsin.MAXITER=1; parsin.tv='iso'; l=input.l; u=input.u;
+if((l==-Inf)&&(u==Inf))
+    project=@(x)x;
+elseif (isfinite(l)&&(u==Inf))
+    project=@(x)(((l<x).*x)+(l*(x<=l)));
+elseif (isfinite(u)&&(l==-Inf))
+     project=@(x)(((x<u).*x)+((x>=u)*u));
+elseif ((isfinite(u)&&isfinite(l))&&(l<u))
+    project=@(x)(((l<x)&(x<u)).*x)+((x>=u)*u)+(l*(x<=l));
+else
+    error('lower and upper bound l,u should satisfy l<u');
+end
+
+if iscell(b)
+    T=length(b); 
+else
+    T = 1;
+    RR = {RR};
+    b = {b};
+end
+
+Lx=input.L; 
+n1=input.n1; n2=input.n2; N=n1*n2;
+alpha = input.alpha; 
+Phi=input.Phi;
+
+for t=1:T,
+    Atb{t}=RR{t}'*b{t};
+end
+
+TV_iso = true; TV_eps = 1e-10;
+y=zeros(input.n1*input.n2,T);
+yr=zeros(size(y));
+tnew=1;
+
+iterno=0;
+t00 = cputime; t0=t00;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% main loop
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+for itr = 1:input.maxitr  % total iter counter        
+    iterno=iterno+1; 
+    told=tnew;
+    yp=y;
+    
+    %update yg    
+    for t=1:T
+        temp=RR{t}'*(RR{t}*yr(:,t));
+        temp=temp-Atb{t};
+        yg(:,t)=yr(:,t)-temp/Lx; 
+    end
+    
+    % a) solve the joint TV subproblem
+    if (itr==1)
+        [y, P1, P2]=denoise_TV_MT(reshape(yg, [n1, n2, T]), alpha/Lx,-inf,inf,[],[], parsin);
+    else
+        [y, P1, P2]=denoise_TV_MT(reshape(yg, [n1, n2, T]), alpha/Lx,-inf,inf,P1, P2,parsin);
+    end
+    y=reshape(y, [n1*n2, T]);
+    
+    y = project(y);
+
+    tnew=(1+sqrt(1+4*told^2))/2; 
+    yr=y+((told-1)/tnew)*(y-yp);    
+
+     for  t=1:T
+        SNR(1,t) = snr(y(:,t), xf(:,t));
+    end
+
+    output.snr(iterno)=snr(y(:), xf(:));
+
+    output.xtime(iterno)=cputime-t00; 
+    
+     if itr>=input.no  
+        break
+     end
+end
+
+for  t=1:T
+        SNR(1,t) = snr(y(:,t), xf(:,t));
+end
+output.finalsnr= SNR;
+output.y=y;
+
+end
